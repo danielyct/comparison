@@ -14,3 +14,6 @@ raw.set_index(pd.DatetimeIndex(raw['Date']), inplace=True)
 data = raw.loc[:," Close"]
 data.columns = ["Close"]
 data = pd.DataFrame(data)
+
+mc.main(data)
+reg.reg(data)
