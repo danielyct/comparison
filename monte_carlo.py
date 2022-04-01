@@ -22,7 +22,6 @@ log_returns.plot(figsize=(15,6))
 u = log_returns.mean()
 var = log_returns.var()
 drift = u - (0.5*var)
-drift
 stddev = log_returns.std()
 x = np.random.rand(10,2)
 norm.ppf(x)
