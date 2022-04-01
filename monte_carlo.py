@@ -4,13 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 import seaborn as sns
 # matplotlib inline
-raw = pd.DataFrame()
-raw = pd.read_csv("AMD.csv")
-raw[:10]
-raw.set_index(pd.DatetimeIndex(raw['Date']), inplace=True)
-data = raw.loc[:," Close"]
-data.columns = ["Close"]
-data = pd.DataFrame(data)
+
 
 log_returns = np.log(1 + data.pct_change())
 
