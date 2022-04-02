@@ -7,9 +7,15 @@ import seaborn as sns
 
 def mc(data):
     pct_change = []
-    for i, value in enumerate(data)
+    for i in range(data.size):
+        if i == data.size - 1:
+            break
+        new = data.iloc[i]
+        old = data.iloc[i+1]
+        pct_change.append((new - old) / old)
+    
+    pct_change = pd.DataFrame(pct_change)
     log_returns = np.log(1 + pct_change)
-
     sns.distplot(log_returns.iloc[1:])
     plt.xlabel("Daily Return")
     plt.ylabel("Frequency")
@@ -42,3 +48,5 @@ def mc(data):
 
     for i in range(len(df.columns)):
         sns.distplot(df[i])
+
+    return model, mse
