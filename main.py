@@ -5,8 +5,6 @@ from scipy.stats import norm
 # %matplotlib inline
 
 def mc(data, predict_days, trials = 1000):
-    print(data)
-    print(data.size)
     pct_change = []
     for i in range(data.size):
         if i == data.size - 1:
@@ -88,7 +86,8 @@ ax.plot(mc_price, label = "Monte Carlo")
 ax.legend()
 
 fig2, ax2 = plt.subplots()
-ax2.plot(mc_model)
+ax2.plot(mc_model[:,0:10])
+
 print("mse of monte carlo:")
 print(mc_mse)
 # print("mse of linear regression:")
