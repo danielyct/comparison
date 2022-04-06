@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 # %matplotlib inline
 
 def mc(data, predict_days, trials = 1000):
@@ -23,6 +25,7 @@ def mc(data, predict_days, trials = 1000):
 
     days = predict_days + 1
     Z = norm.ppf(np.random.rand(days,trials)) # Percent point function
+    # Z = np.zeros_like(np.random.rand(days,trials))
     daily_returns = np.exp(drift.values + stddev.values * Z)
 
     S0 = data.iloc[-1]
@@ -37,60 +40,74 @@ def mc(data, predict_days, trials = 1000):
 
     return price_list, avg_prediction
 
-def reg(data):
-    
-    moded_x = PolynomialFeatures(degree = 1, include_bias=False).fit_transform(x)
-    model = LinearRegression().fit(moded_x, y)
-    err = model.score(moded_x,y)
-    intercept = model.intercept_
-    result = model.predict(moded_x)
-    return result, intercept, err
+def reg(theta1, theta2, total_days, predict_days):
+    reg_predict = []
+    for i in range(total_days - predict_days, total_days):
+        reg_predict.append(theta1 * i + theta2)
+    return reg_predict
 
 def mse(prediction, real):
     if len(prediction) != len(real):
+        print(len(prediction))
+        print(len(real))
         return -1
     length = len(prediction)
     mse = 0
     for i in range(length):
         error = prediction[i] - real[i]
         mse = mse + (error**2)
-
     mse = mse / length
-
     return mse
 
-raw = pd.read_csv("AMD.csv")
-raw = raw[::-1].reset_index(drop = True)    # Reset index, start with the oldest record
-data = raw.loc[:," Close"]
-data.columns = ["Close"]
-total_days = data.size
-predict_days = 200
-real_data = data.iloc[-predict_days:].reset_index(drop = True)  # extract the last 200 days for the comparison
-training_data = data.iloc[0:total_days - predict_days].reset_index(drop = True) 
-training_data = pd.DataFrame(training_data)
+def main(stock, theta1 = 0.5, theta2 = 200, reg = False):
+    stock_file = stock + ".csv"
+    raw = pd.read_csv(stock_file)
+    raw = raw[::-1].reset_index(drop = True)    # Reset index, start with the oldest record
+    data = raw.loc[:," Close"]
+    data.columns = ["Close"]
+    total_days = data.size
+    predict_days = 200
+    real_data = data.iloc[-predict_days:].reset_index(drop = True)  # extract the last 200 days for the comparison
+    training_data = data.iloc[0:total_days - predict_days].reset_index(drop = True) 
+    training_data = pd.DataFrame(training_data)
 
-trials = 1000
-mc_model, mc_price = mc(training_data, predict_days, trials)
-# reg_price = reg(training_data)
+    trials = 1000
+    theta1 = 0.5195
+    theta2 = 258.2598
 
-mc_mse = mse(mc_price, real_data)
-# reg_mse = mse(reg_price, real_data)
+    if reg == True:
+        reg_price = reg(theta1, theta2, total_days, predict_days)
+        reg_mse = mse(reg_price, real_data)
 
-fig, ax = plt.subplots()
-ax.set_title("prediction over 200 days")
-ax.set_xlabel("date")
-ax.set_ylabel("price")
-ax.plot(real_data, label = "Real stock price")
-ax.plot(mc_price, label = "Monte Carlo")
-# ax.plot(reg_price, label = "Linear Regression")
-ax.legend()
+    mc_model, mc_price = mc(training_data, predict_days, trials)
 
-fig2, ax2 = plt.subplots()
-ax2.plot(mc_model[:,0:10])
+    mc_mse = mse(mc_price, real_data)
 
-print("mse of monte carlo:")
-print(mc_mse)
-# print("mse of linear regression:")
-# print(reg_mse)
+    fig, ax = plt.subplots()
+    ax.set_title("prediction over 200 days of " + stock)
+    ax.set_xlabel("date")
+    ax.set_ylabel("price")
+    ax.plot(real_data, label = "Real stock price")
+    ax.plot(mc_price, label = "Monte Carlo")
+    if reg == True:
+        ax.plot(reg_price, label = "Linear Regression")
+    ax.legend()
 
-plt.show()
+    fig2, ax2 = plt.subplots()
+    ax2.set_title("10 example of Monte Carlo of " + stock)
+    ax2.plot(mc_model[:,0:10])
+
+    print("stat of " + stock)
+
+    print("mse of monte carlo:")
+    print(mc_mse)
+    if reg == True:
+        print("mse of linear regression:")
+        print(reg_mse)
+
+    plt.show()
+
+stock = "BAC"
+slope = 0.5195
+intercept = 258.2598
+main(stock, slope, intercept)
