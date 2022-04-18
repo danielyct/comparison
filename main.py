@@ -25,11 +25,11 @@ def mc(data, predict_days, trials = 1000):
 
     days = predict_days + 1
     Z = norm.ppf(np.random.rand(days,trials)) # Percent point function
-    # Z = np.zeros_like(np.random.rand(days,trials))
+    # Z = np.zeros_like(np.random.rand(days,trials)) # Testing Monte Carlo without randomness/volatility
     daily_returns = np.exp(drift.values + stddev.values * Z)
 
     S0 = data.iloc[-1]
-    print(S0)
+    print(S0)   # debugging use
     price_list = np.zeros_like(daily_returns)
     price_list[0] = S0
     avg_prediction = []
@@ -40,7 +40,7 @@ def mc(data, predict_days, trials = 1000):
 
     return price_list, avg_prediction
 
-def reg(theta1, theta2, total_days, predict_days):
+def reg(theta1, theta2, total_days, predict_days): # theta1 and theta2 is provided from the matlab code, input manually 
     reg_predict = []
     for i in range(total_days - predict_days, total_days):
         reg_predict.append(theta1 * i + theta2)
@@ -48,8 +48,8 @@ def reg(theta1, theta2, total_days, predict_days):
 
 def mse(prediction, real):
     if len(prediction) != len(real):
-        print(len(prediction))
-        print(len(real))
+        print(len(prediction))      # debugging use
+        print(len(real))            # debugging use
         return -1
     length = len(prediction)
     mse = 0
@@ -59,55 +59,59 @@ def mse(prediction, real):
     mse = mse / length
     return mse
 
-def main(stock, theta1 = 0.5, theta2 = 200, reg = False):
+def main(stock, theta1 = 0.5, theta2 = 200, reg_on = False):
     stock_file = stock + ".csv"
     raw = pd.read_csv(stock_file)
     raw = raw[::-1].reset_index(drop = True)    # Reset index, start with the oldest record
-    data = raw.loc[:," Close"]
+    data = raw.loc[:,"Close"]
     data.columns = ["Close"]
     total_days = data.size
-    predict_days = 200
+    predict_days = 50
     real_data = data.iloc[-predict_days:].reset_index(drop = True)  # extract the last 200 days for the comparison
     training_data = data.iloc[0:total_days - predict_days].reset_index(drop = True) 
     training_data = pd.DataFrame(training_data)
 
     trials = 1000
-    theta1 = 0.5195
-    theta2 = 258.2598
 
-    if reg == True:
+    mc_model, mc_price = mc(training_data, predict_days, trials)
+    mc_mse = mse(mc_price, real_data)
+    
+    if reg_on == True:
         reg_price = reg(theta1, theta2, total_days, predict_days)
         reg_mse = mse(reg_price, real_data)
 
-    mc_model, mc_price = mc(training_data, predict_days, trials)
-
-    mc_mse = mse(mc_price, real_data)
-
     fig, ax = plt.subplots()
-    ax.set_title("prediction over 200 days of " + stock)
+    ax.set_title("prediction over "+ str(predict_days) +" days of " + stock)
     ax.set_xlabel("date")
     ax.set_ylabel("price")
     ax.plot(real_data, label = "Real stock price")
     ax.plot(mc_price, label = "Monte Carlo")
-    if reg == True:
+    if reg_on == True:
         ax.plot(reg_price, label = "Linear Regression")
     ax.legend()
 
     fig2, ax2 = plt.subplots()
-    ax2.set_title("10 example of Monte Carlo of " + stock)
-    ax2.plot(mc_model[:,0:10])
+    ax2.set_title("Monte Carlo simulations of " + stock)
+    ax2.plot(mc_model[:,:])
 
     print("stat of " + stock)
 
     print("mse of monte carlo:")
     print(mc_mse)
-    if reg == True:
+    if reg_on == True:
         print("mse of linear regression:")
         print(reg_mse)
-
     plt.show()
+    
+stock = "AMD"
+slope = 0.007268825632074
+intercept = 0.365887407728254
+main(stock, slope, intercept, reg_on = False)
 
-stock = "BAC"
-slope = 0.5195
-intercept = 258.2598
-main(stock, slope, intercept)
+# Ideally, we can run the below code with all thetas imported as a list
+# stocks = ["AMD", "BAC", "GOOGL", "JPM", "MS", "TSLA"]
+# slope = 0.007268825632074
+# intercept = 0.365887407728254
+# for stock in stocks:
+#     main(stock, slope, intercept, reg_on = False)
+
