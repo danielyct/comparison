@@ -14,19 +14,21 @@ def mc(data, predict_days, trials = 1000):
         new = data.iloc[i + 1]
         old = data.iloc[i]
         pct_change.append((new - old) / old)
+    
+    days = predict_days + 1
 
     pct_change = pd.DataFrame(pct_change)
     log_returns = np.log(1 + pct_change)
 
-    u = log_returns.mean()
+    mean = log_returns.mean()
     var = log_returns.var()
-    drift = u - (0.5*var)
+    drift = mean - (0.5*var)
     stddev = log_returns.std()
 
-    days = predict_days + 1
-    Z = norm.ppf(np.random.rand(days,trials)) # Percent point function
-    # Z = np.zeros_like(np.random.rand(days,trials)) # Testing Monte Carlo without randomness/volatility
-    daily_returns = np.exp(drift.values + stddev.values * Z)
+    
+    vol_table = norm.ppf(np.random.rand(days,trials)) # Percent point function
+    # vol_table = np.zeros_like(np.random.rand(days,trials)) # Testing Monte Carlo without randomness/volatility
+    daily_returns = np.exp(drift.values + stddev.values * vol_table) 
 
     S0 = data.iloc[-1]
     print(S0)   # debugging use
@@ -34,7 +36,7 @@ def mc(data, predict_days, trials = 1000):
     price_list[0] = S0
     avg_prediction = []
 
-    for t in range(1,days):
+    for t in range(1,days):     
        price_list[t] = price_list[t-1]*daily_returns[t]
        avg_prediction.append(price_list[t].mean())
 
@@ -103,10 +105,10 @@ def main(stock, theta1 = 0.5, theta2 = 200, reg_on = False):
         print(reg_mse)
     plt.show()
     
-stock = "AMD"
-slope = 0.007268825632074
-intercept = 0.365887407728254
-main(stock, slope, intercept, reg_on = False)
+stock = "GOOGL"
+slope = 3.047484420577
+intercept = 1130.110241408717
+main(stock, slope, intercept, reg_on = True)
 
 # Ideally, we can run the below code with all thetas imported as a list
 # stocks = ["AMD", "BAC", "GOOGL", "JPM", "MS", "TSLA"]
