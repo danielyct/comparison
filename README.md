@@ -1,2 +1,2 @@
 # comparison
-This code 
+This repo is used for the project "Comparing Monte Carlo Method with Geometric Brownian Motion and Linear Regression in Forecasting Stock Price", in the course PHY4273 Special Topics in Physics. It contains the data files for the project and Monte Carlo part. The Regression part is written by Kenny Hui Tsz Hin and the source code of that can be found in the report along with the result of the comparison.
